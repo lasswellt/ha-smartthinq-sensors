@@ -219,6 +219,32 @@ REFRIGERATOR_SENSORS: tuple[ThinQSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
     ),
+    ThinQSensorEntityDescription(
+        key=RefrigeratorFeatures.WATERFILTERUSED_MONTH,
+        name="Water filter used",
+        icon="mdi:water-check",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="months",
+        entity_registry_enabled_default=False,
+    ),
+    ThinQSensorEntityDescription(
+        key=RefrigeratorFeatures.SMARTSAVINGMODE,
+        name="Smart saving mode",
+        icon="mdi:leaf-circle",
+        entity_registry_enabled_default=False,
+    ),
+    ThinQSensorEntityDescription(
+        key=RefrigeratorFeatures.SMARTSAVING_STATE,
+        name="Smart saving state",
+        icon="mdi:leaf",
+        entity_registry_enabled_default=False,
+    ),
+    ThinQSensorEntityDescription(
+        key=RefrigeratorFeatures.ACTIVESAVING,
+        name="Active saving",
+        icon="mdi:gauge-low",
+        entity_registry_enabled_default=False,
+    ),
 )
 AC_SENSORS: tuple[ThinQSensorEntityDescription, ...] = (
     ThinQSensorEntityDescription(

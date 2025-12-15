@@ -110,6 +110,10 @@ class RefrigeratorFeatures(StrEnum):
     SMARTSAVINGMODE = "smart_saving_mode"
     WATERFILTERUSED_MONTH = "water_filter_used_month"
     WATERFILTER_REMAIN_PERC = "water_filter_remain_perc"
+    SABBATH = "sabbath"
+    LOCKED = "locked"
+    ACTIVESAVING = "active_saving"
+    SMARTSAVING_STATE = "smart_saving_state"
 
 
 class WashDeviceFeatures(StrEnum):

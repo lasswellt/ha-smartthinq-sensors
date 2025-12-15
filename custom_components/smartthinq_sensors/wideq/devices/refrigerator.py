@@ -408,6 +408,15 @@ class RefrigeratorStatus(DeviceStatus):
                 self._sabbath_state = state
         return self._sabbath_state
 
+    @property
+    def sabbath_mode(self):
+        """Return current sabbath mode status."""
+        state = self._get_sabbath_state()
+        if not state:
+            return None
+        key = "sabbathMode" if self.is_info_v2 else "Sabbath"
+        return self._update_feature(RefrigeratorFeatures.SABBATH, state, True, key)
+
     def _get_default_index(self, key_mode, key_index):
         """Get default model info index key."""
         config = self._device.model_info.config_value(key_mode)
@@ -649,13 +658,34 @@ class RefrigeratorStatus(DeviceStatus):
         """Return current locked state."""
         state = self.lookup_enum("LockingStatus")
         if not state:
-            return StateOptions.NONE
-        return self._device.get_enum_text(state)
+            return None
+        return self._update_feature(RefrigeratorFeatures.LOCKED, state, True, "LockingStatus")
 
     @property
     def active_saving_status(self):
         """Return current active saving status."""
-        return self._data.get("ActiveSavingStatus", "N/A")
+        status = self._data.get("ActiveSavingStatus")
+        if not status:
+            return None
+        return self._update_feature(
+            RefrigeratorFeatures.ACTIVESAVING,
+            status,
+            False,
+            "ActiveSavingStatus"
+        )
+
+    @property
+    def smart_saving_state_status(self):
+        """Return current smart saving run state."""
+        state = self.smart_saving_state
+        if state == StateOptions.NONE:
+            return None
+        return self._update_feature(
+            RefrigeratorFeatures.SMARTSAVING_STATE,
+            state,
+            False,
+            FEATURE_KEY_IGNORE
+        )
 
     def _update_features(self):
         _ = [
@@ -668,4 +698,8 @@ class RefrigeratorStatus(DeviceStatus):
             self.fresh_air_filter_remain_perc,
             self.water_filter_used_month,
             self.water_filter_remain_perc,
+            self.sabbath_mode,
+            self.locked_state,
+            self.active_saving_status,
+            self.smart_saving_state_status,
         ]

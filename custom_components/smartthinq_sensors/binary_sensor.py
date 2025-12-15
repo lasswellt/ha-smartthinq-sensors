@@ -37,7 +37,7 @@ from .device_helpers import (
     get_entity_name,
     get_wrapper_device,
 )
-from .wideq import DehumidifierFeatures, DeviceType, WashDeviceFeatures
+from .wideq import DehumidifierFeatures, DeviceType, RefrigeratorFeatures, WashDeviceFeatures
 
 # range sensor attributes
 ATTR_COOKTOP_STATE = "cooktop_state"
@@ -176,6 +176,25 @@ REFRIGERATOR_BINARY_SENSORS: tuple[ThinQBinarySensorEntityDescription, ...] = (
         name="Door open",
         device_class=BinarySensorDeviceClass.DOOR,
         value_fn=lambda x: x.dooropen_state,
+    ),
+    ThinQBinarySensorEntityDescription(
+        key=RefrigeratorFeatures.SABBATH,
+        name="Sabbath mode",
+        icon="mdi:calendar-star",
+        entity_registry_enabled_default=False,
+    ),
+    ThinQBinarySensorEntityDescription(
+        key=RefrigeratorFeatures.LOCKED,
+        name="Lock status",
+        device_class=BinarySensorDeviceClass.LOCK,
+        icon="mdi:lock-open-variant-outline",
+        entity_registry_enabled_default=False,
+    ),
+    ThinQBinarySensorEntityDescription(
+        key=RefrigeratorFeatures.FRESHAIRFILTER,
+        name="Fresh air filter",
+        icon="mdi:air-filter",
+        entity_registry_enabled_default=False,
     ),
 )
 RANGE_BINARY_SENSORS: tuple[ThinQBinarySensorEntityDescription, ...] = (
