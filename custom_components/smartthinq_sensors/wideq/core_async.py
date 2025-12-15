@@ -44,7 +44,8 @@ ENABLE_CLEANUP_CLOSED = not (3, 11, 1) <= sys.version_info < (3, 11, 4)
 # aiohttp interacts poorly with https://github.com/python/cpython/pull/98540
 # The issue was fixed in 3.11.4 via https://github.com/python/cpython/pull/104485
 
-# enable logging of auth information
+# WARNING: Enabling LOG_AUTH_INFO will log access tokens to debug logs!
+# Only enable temporarily in secure development environments. NEVER commit with True.
 LOG_AUTH_INFO = False
 
 # v2
@@ -232,9 +233,10 @@ class CoreAsync:
         """Return current aiohttp client session or init a new one when required."""
         if not self._session:
             self._session = lg_client_session()
+            self._managed_session = True
         return self._session
 
-    def _get_client_id(self, user_number: str | None = None) -> str:
+    def _get_client_id(self, user_number: str | None = None) -> str | None:
         """Generate a new clent ID or return existing."""
         if self._client_id is not None:
             return self._client_id
@@ -262,8 +264,8 @@ class CoreAsync:
         # if fails, we try to convert text from xml to json
         try:
             return xmltodict.parse(resp_text)
-        except Exception:
-            raise exc.InvalidResponseError(resp_text) from None
+        except Exception as ex:
+            raise exc.InvalidResponseError(resp_text) from ex
 
     @staticmethod
     def _oauth2_signature(message: str, secret: str) -> str:
@@ -958,7 +960,7 @@ class Auth:
             except exc.AuthenticationError:
                 raise
             except Exception as ex:
-                raise exc.AuthenticationError("Third part login failed") from ex
+                raise exc.AuthenticationError(f"Third part login failed: {ex}") from ex
             url_info = _oauth_info_from_result(token_info)
 
         result = await Auth._oauth_info_from_result(url_info, core)
@@ -984,7 +986,7 @@ class Auth:
         except exc.AuthenticationError:
             raise
         except Exception as ex:
-            raise exc.AuthenticationError("User login failed") from ex
+            raise exc.AuthenticationError(f"User login failed: {ex}") from ex
 
         login_info = _oauth_info_from_result(token_info)
         result = await Auth._oauth_info_from_result(login_info, gateway.core)
@@ -1012,7 +1014,7 @@ class Auth:
     @classmethod
     async def from_user_login(
         cls, gateway: Gateway, username: str, password: str
-    ) -> Auth:
+    ) -> Auth | None:
         """Perform authentication, returning a new Auth object."""
         oauth_info = await cls.oauth_info_from_user_login(username, password, gateway)
         if not oauth_info:

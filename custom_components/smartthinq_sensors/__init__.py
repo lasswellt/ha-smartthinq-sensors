@@ -279,6 +279,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     if not client.has_devices:
         _LOGGER.error("No ThinQ devices found. Component setup aborted")
+        await client.close()
         return False
 
     _LOGGER.debug("ThinQ client connected")
@@ -308,7 +309,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     async def _async_call_reload_entry():
         """Reload current entry."""
-        if SIGNAL_RELOAD_ENTRY in hass.data[DOMAIN]:
+        if hass.data[DOMAIN].setdefault(SIGNAL_RELOAD_ENTRY, 0) > 0:
             return
         hass.data[DOMAIN][SIGNAL_RELOAD_ENTRY] = 1
         await hass.config_entries.async_reload(entry.entry_id)
@@ -325,12 +326,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _close_lg_client)
     )
 
-    hass.data[DOMAIN] = {
+    # Update instead of replace to preserve SIGNAL_RELOAD_ENTRY and AUTH_RETRY
+    hass.data[DOMAIN].update({
         CLIENT: client,
         LGE_DEVICES: lge_devices,
         UNSUPPORTED_DEVICES: unsupported_devices,
         DISCOVERED_DEVICES: discovered_devices,
-    }
+    })
     await hass.config_entries.async_forward_entry_setups(entry, SMARTTHINQ_PLATFORMS)
 
     start_devices_discovery(hass, entry, client)
@@ -340,14 +342,17 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    if unload_ok := await hass.config_entries.async_unload_platforms(
+    unload_ok = await hass.config_entries.async_unload_platforms(
         entry, SMARTTHINQ_PLATFORMS
-    ):
-        data = hass.data.pop(DOMAIN)
-        reload = data.get(SIGNAL_RELOAD_ENTRY, 0)
-        if reload > 0:
-            hass.data[DOMAIN] = {SIGNAL_RELOAD_ENTRY: reload}
-        await data[CLIENT].close()
+    )
+
+    # Always clean up client, even if unload failed
+    data = hass.data.pop(DOMAIN)
+    reload = data.get(SIGNAL_RELOAD_ENTRY, 0)
+    if reload > 0:
+        hass.data[DOMAIN] = {SIGNAL_RELOAD_ENTRY: reload}
+    await data[CLIENT].close()
+
     return unload_ok
 
 
